@@ -146,7 +146,7 @@ static NSDictionary* customCertificatesForHost;
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 /* __IPHONE_13_0 */
     _savedAutomaticallyAdjustsScrollIndicatorInsets = NO;
 #endif
-      
+
   }
 
 #if !TARGET_OS_OSX
@@ -198,10 +198,30 @@ static NSDictionary* customCertificatesForHost;
  */
 - (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 {
-  if (!navigationAction.targetFrame.isMainFrame) {
-    [webView loadRequest:navigationAction.request];
-  }
-  return nil;
+    NSString *scheme = navigationAction.request.URL.scheme;
+
+    if ((navigationAction.targetFrame.isMainFrame || _openNewWindowInWebView) && ([scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"] || [scheme isEqualToString:@"about"])) {
+      NSMutableDictionary<NSString *, id> *event = [self baseEvent];
+      [event addEntriesFromDictionary: @{@"url": (navigationAction.request.URL).absoluteString,
+                                        @"navigationType": @(navigationAction.navigationType)
+    }];
+
+    RNCWebView* wkWebView = [self.delegate webView:self shouldCreateNewWindow:event withConfiguration:configuration withCallback:_onShouldCreateNewWindow];
+
+    if (!wkWebView) {
+        [webView loadRequest:navigationAction.request];
+      } else {
+        return wkWebView.webview;
+      }
+    } else {
+      UIApplication *app = [UIApplication sharedApplication];
+      NSURL *url = navigationAction.request.URL;
+      if ([app canOpenURL:url]) {
+        [app openURL:url];
+      }
+    }
+
+    return nil;
 }
 
 - (WKWebViewConfiguration *)setUpWkWebViewConfig
@@ -550,6 +570,17 @@ static NSDictionary* customCertificatesForHost;
         [_webView loadHTMLString:html baseURL:baseURL];
         return;
     }
+
+    // Some child windows (created by createWebViewWithConfiguration)
+    // open about:blank at first before navigate to upcoming request,
+    // the method may run before the upcoming request is navigated
+    // and will cause error "about:blank is not a valid file URL"
+    // If you want to open a blank page, you should pass source = { html: '' }
+    NSString *uri = [RCTConvert NSString:_source[@"uri"]];
+    if ([uri isEqualToString:@"about:blank"]) {
+        return;
+    }
+
 
     NSURLRequest *request = [self requestForSource:_source];
     // Because of the way React works, as pages redirect, we actually end up
@@ -920,10 +951,43 @@ static NSDictionary* customCertificatesForHost;
  * topViewController
  */
 -(UIViewController *)topViewController{
-    return RCTPresentedViewController();
+    UIViewController *controller = [self topViewControllerWithRootViewController:[self getCurrentWindow].rootViewController];
+    return controller;
+}
+
+/**
+ * topViewControllerWithRootViewController
+ */
+-(UIViewController *)topViewControllerWithRootViewController:(UIViewController *)viewController{
+  if (viewController==nil) return nil;
+  if (viewController.presentedViewController!=nil) {
+    return [self topViewControllerWithRootViewController:viewController.presentedViewController];
+  } else if ([viewController isKindOfClass:[UITabBarController class]]){
+    return [self topViewControllerWithRootViewController:[(UITabBarController *)viewController selectedViewController]];
+  } else if ([viewController isKindOfClass:[UINavigationController class]]){
+    return [self topViewControllerWithRootViewController:[(UINavigationController *)viewController visibleViewController]];
+  } else {
+    return viewController;
+  }
 }
 
 #endif // !TARGET_OS_OSX
+
+/**
+ * getCurrentWindow
+ */
+-(UIWindow *)getCurrentWindow{
+  UIWindow *window = [UIApplication sharedApplication].keyWindow;
+  if (window.windowLevel!=UIWindowLevelNormal) {
+    for (UIWindow *wid in [UIApplication sharedApplication].windows) {
+      if (window.windowLevel==UIWindowLevelNormal) {
+        window = wid;
+        break;
+      }
+    }
+  }
+  return window;
+}
 
 /**
  * Decides whether to allow or cancel a navigation.
