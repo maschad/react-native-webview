@@ -4,6 +4,7 @@ import { Linking, View, ActivityIndicator, Text } from 'react-native';
 import {
   OnShouldStartLoadWithRequest,
   ShouldStartLoadRequestEvent,
+  OnShouldCreateNewWindow,
 } from './WebViewTypes';
 import styles from './WebView.styles';
 
@@ -17,12 +18,9 @@ const extractOrigin = (url: string): string => {
 const originWhitelistToRegex = (originWhitelist: string): string =>
   `^${escapeStringRegexp(originWhitelist).replace(/\\\*/g, '.*')}`;
 
-const passesWhitelist = (
-  compiledWhitelist: readonly string[],
-  url: string,
-) => {
+const passesWhitelist = (compiledWhitelist: readonly string[], url: string) => {
   const origin = extractOrigin(url);
-  return compiledWhitelist.some(x => new RegExp(x).test(origin));
+  return compiledWhitelist.some((x) => new RegExp(x).test(origin));
 };
 
 const compileWhitelist = (
@@ -44,21 +42,43 @@ const createOnShouldStartLoadWithRequest = (
     const { url, lockIdentifier } = nativeEvent;
 
     if (!passesWhitelist(compileWhitelist(originWhitelist), url)) {
-      Linking.canOpenURL(url).then((supported) => {
-        if (supported) {
-          return Linking.openURL(url);
-        }
-        console.warn(`Can't open url: ${url}`);
-        return undefined;
-      }).catch(e => {
-        console.warn('Error opening URL: ', e);
-      });
+      Linking.canOpenURL(url)
+        .then((supported) => {
+          if (supported) {
+            return Linking.openURL(url);
+          }
+          console.warn(`Can't open url: ${url}`);
+          return undefined;
+        })
+        .catch((e) => {
+          console.warn('Error opening URL: ', e);
+        });
       shouldStart = false;
     } else if (onShouldStartLoadWithRequest) {
       shouldStart = onShouldStartLoadWithRequest(nativeEvent);
     }
 
     loadRequest(shouldStart, url, lockIdentifier);
+  };
+};
+
+const createOnShouldCreateNewWindow = (
+  createNewWindow: (
+    shouldCreate: boolean,
+    url: string,
+    lockIdentifier: number,
+  ) => void,
+  onShouldCreateNewWindow?: OnShouldCreateNewWindow,
+) => {
+  return ({ nativeEvent }: WebViewNavigationEvent) => {
+    let shouldStart = true;
+    const { url, lockIdentifier } = nativeEvent;
+
+    if (onShouldCreateNewWindow) {
+      shouldStart = onShouldCreateNewWindow(nativeEvent);
+    }
+
+    createNewWindow(shouldStart, url, lockIdentifier);
   };
 };
 
@@ -83,6 +103,7 @@ const defaultRenderError = (
 export {
   defaultOriginWhitelist,
   createOnShouldStartLoadWithRequest,
+  createOnShouldCreateNewWindow,
   defaultRenderLoading,
   defaultRenderError,
 };

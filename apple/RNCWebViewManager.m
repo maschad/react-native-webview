@@ -254,4 +254,42 @@ RCT_EXPORT_METHOD(startLoadWithResult:(BOOL)result lockIdentifier:(NSInteger)loc
   }
 }
 
+- (RNCWebView*)webView:(__unused RNCWebView *)webView
+ shouldCreateNewWindow:(NSMutableDictionary<NSString *, id> *)request
+     withConfiguration:(WKWebViewConfiguration*)configuration
+          withCallback:(RCTDirectEventBlock)callback
+{
+  createNewWindowCondition = [[NSConditionLock alloc] initWithCondition:arc4random()];
+  createNewWindowResult = YES;
+  request[@"lockIdentifier"] = @(createNewWindowCondition.condition);
+  callback(request);
+
+  // Block the main thread for a maximum of 250ms until the JS thread returns
+  if ([createNewWindowCondition lockWhenCondition:0 beforeDate:[NSDate dateWithTimeIntervalSinceNow:.25]]) {
+    [createNewWindowCondition unlock];
+    createNewWindowCondition = nil;
+    if (createNewWindowResult) {
+      newWindow = [[RNCWebView alloc] initWithConfiguration:configuration from:webView];
+      return newWindow;
+    } else {
+      return nil;
+    }
+  } else {
+    RCTLogWarn(@"Did not receive response to shouldCreateNewWindow in time, defaulting to YES");
+    newWindow = [[RNCWebView alloc] initWithConfiguration:configuration from:webView];
+    return newWindow;
+  }
+}
+
+RCT_EXPORT_METHOD(createNewWindowWithResult:(BOOL)result lockIdentifier:(NSInteger)lockIdentifier)
+{
+  if (createNewWindowCondition && [createNewWindowCondition tryLockWhenCondition:lockIdentifier]) {
+    createNewWindowResult = result;
+    [createNewWindowCondition unlockWithCondition:0];
+  } else {
+    RCTLogWarn(@"createNewWindowWithResult invoked with invalid lockIdentifier: "
+              "got %zd, expected %zd", lockIdentifier, createNewWindowCondition.condition);
+  }
+}
+
 @end
