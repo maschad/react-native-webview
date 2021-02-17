@@ -365,6 +365,7 @@ class WebView extends React.Component<IOSWebViewProps, State> {
         onMessage={this.onMessage}
         onScroll={this.props.onScroll}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        onNavigationStateChange={this.updateNavigationState}
         onShouldCreateNewWindow={onShouldCreateNewWindow}
         onContentProcessDidTerminate={this.onContentProcessDidTerminate}
         injectedJavaScript={this.props.injectedJavaScript}

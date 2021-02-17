@@ -281,6 +281,8 @@ export interface CommonNativeWebViewProps extends ViewProps {
   onShouldStartLoadWithRequest: (event: ShouldStartLoadRequestEvent) => void;
   onShouldCreateNewWindow: (event: WebViewNavigationEvent) => void;
   onWebViewClosed?: (event: WebViewNavigationEvent) => void;
+  onNavigationStateChange?: (event: WebViewNavigationEvent) => void;
+
   showsHorizontalScrollIndicator?: boolean;
   showsVerticalScrollIndicator?: boolean;
   // TODO: find a better way to type this.
