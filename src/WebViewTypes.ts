@@ -229,6 +229,7 @@ export type WebViewSource = WebViewSourceUri | WebViewSourceHtml;
 
 export interface ViewManager {
   startLoadWithResult: Function;
+  createNewWindowWithResult: Function;
 }
 
 export interface WebViewNativeConfig {

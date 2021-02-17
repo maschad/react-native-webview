@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import {
   createOnShouldStartLoadWithRequest,
+  createOnShouldCreateNewWindow,
 } from './WebViewShared';
 import {
   NativeWebViewWindows,
@@ -59,8 +60,10 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class WebView extends React.Component<WebViewSharedProps, State> {
-
+export default class WebView extends React.Component<
+  WebViewSharedProps,
+  State
+> {
   static defaultProps = {
     javaScriptEnabled: true,
   };
@@ -68,7 +71,7 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
   state: State = {
     viewState: this.props.startInLoadingState ? 'LOADING' : 'IDLE',
     lastErrorEvent: null,
-  }
+  };
 
   webViewRef = React.createRef<NativeWebViewWindows>();
 
@@ -78,7 +81,7 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       UIManager.getViewManagerConfig('RCTWebView').Commands.goForward,
       undefined,
     );
-  }
+  };
 
   goBack = () => {
     UIManager.dispatchViewManagerCommand(
@@ -86,7 +89,7 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       UIManager.getViewManagerConfig('RCTWebView').Commands.goBack,
       undefined,
     );
-  }
+  };
 
   reload = () => {
     UIManager.dispatchViewManagerCommand(
@@ -94,7 +97,7 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       UIManager.getViewManagerConfig('RCTWebView').Commands.reload,
       undefined,
     );
-  }
+  };
 
   injectJavaScript = (data: string) => {
     UIManager.dispatchViewManagerCommand(
@@ -102,9 +105,9 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       UIManager.getViewManagerConfig('RCTWebView').Commands.injectJavaScript,
       [data],
     );
-  }
+  };
 
-  postMessage = (data: string) => {    
+  postMessage = (data: string) => {
     const message = this.getInjectableJSMessage(data);
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
@@ -113,13 +116,11 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
     );
   };
 
-  getInjectableJSMessage = (message: string ) => {
+  getInjectableJSMessage = (message: string) => {
     return `(function() {window.dispatchEvent(new MessageEvent('message', {data: ${JSON.stringify(
-      message
+      message,
     )}}));})();`;
-  }
-
-
+  };
 
   /**
    * We return an event with a bunch of fields including:
@@ -129,20 +130,20 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
     if (this.props.onNavigationStateChange) {
       this.props.onNavigationStateChange(event.nativeEvent);
     }
-  }
+  };
 
   getWebViewHandle = () => {
     // eslint-disable-next-line react/no-string-refs
     return findNodeHandle(this.webViewRef.current);
-  }
+  };
 
   onLoadingStart = (event: WebViewNavigationEvent) => {
     const { onLoadStart } = this.props;
-    if(onLoadStart) {
+    if (onLoadStart) {
       onLoadStart(event);
     }
     this.updateNavigationState(event);
-  }
+  };
 
   onLoadingProgress = (event: WebViewProgressEvent) => {
     const { onLoadProgress } = this.props;
@@ -153,11 +154,11 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
 
   onLoadingError = (event: WebViewErrorEvent) => {
     event.persist(); // persist this event because we need to store it
-    const {onError, onLoadEnd} = this.props;
-    if(onError) {
+    const { onError, onLoadEnd } = this.props;
+    if (onError) {
       onError(event);
     }
-    if(onLoadEnd) {
+    if (onLoadEnd) {
       onLoadEnd(event);
     }
     console.error('Encountered an error loading page', event.nativeEvent);
@@ -165,41 +166,42 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       lastErrorEvent: event.nativeEvent,
       viewState: 'ERROR',
     });
-  }
+  };
 
-  onLoadingFinish =(event: WebViewNavigationEvent) => {
-    const {onLoad, onLoadEnd} = this.props;
-    if(onLoad) {
+  onLoadingFinish = (event: WebViewNavigationEvent) => {
+    const { onLoad, onLoadEnd } = this.props;
+    if (onLoad) {
       onLoad(event);
     }
-    if(onLoadEnd) {
+    if (onLoadEnd) {
       onLoadEnd(event);
     }
     this.setState({
       viewState: 'IDLE',
     });
     this.updateNavigationState(event);
-  }
+  };
 
   onMessage = (event: WebViewMessageEvent) => {
     const { onMessage } = this.props;
     if (onMessage) {
       onMessage(event);
     }
-  }
+  };
 
   onHttpError = (event: WebViewHttpErrorEvent) => {
     const { onHttpError } = this.props;
     if (onHttpError) {
       onHttpError(event);
     }
-  }
+  };
 
-  render () {
+  render() {
     const {
       nativeConfig = {},
       onMessage,
       onShouldStartLoadWithRequest: onShouldStartLoadWithRequestProp,
+      onShouldCreateNewWindow: onShouldCreateNewWindowProp,
       originWhitelist,
       renderError,
       renderLoading,
@@ -214,35 +216,42 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       otherView = this.props.renderLoading && this.props.renderLoading();
     } else if (this.state.viewState === 'ERROR') {
       const errorEvent = this.state.lastErrorEvent;
-      otherView = this.props.renderError
-        && this.props.renderError(
+      otherView =
+        this.props.renderError &&
+        this.props.renderError(
           errorEvent.domain,
           errorEvent.code,
           errorEvent.description,
         );
     } else if (this.state.viewState !== 'IDLE') {
-      console.error('RCTWebView invalid state encountered: ', this.state.viewState);
+      console.error(
+        'RCTWebView invalid state encountered: ',
+        this.state.viewState,
+      );
     }
 
     const webViewStyles = [styles.container, this.props.style];
     if (
-      this.state.viewState === 'LOADING'
-      || this.state.viewState === 'ERROR'
+      this.state.viewState === 'LOADING' ||
+      this.state.viewState === 'ERROR'
     ) {
       // if we're in either LOADING or ERROR states, don't show the webView
       webViewStyles.push(styles.hidden);
     }
 
     const onShouldStartLoadWithRequest = createOnShouldStartLoadWithRequest(
-      ()=>{},
+      () => {},
       // casting cause it's in the default props
       originWhitelist as readonly string[],
       onShouldStartLoadWithRequestProp,
     );
 
-    const NativeWebView
-    = (nativeConfig.component as typeof NativeWebViewWindows | undefined)
-    || RCTWebView;
+    const onShouldCreateNewWindow = createOnShouldCreateNewWindow(() => {},
+    onShouldCreateNewWindowProp);
+
+    const NativeWebView =
+      (nativeConfig.component as typeof NativeWebViewWindows | undefined) ||
+      RCTWebView;
 
     const webView = (
       <NativeWebView
@@ -257,6 +266,7 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
         onHttpError={this.onHttpError}
         onMessage={this.onMessage}
         onScroll={this.props.onScroll}
+        onShouldCreateNewWindow={onShouldCreateNewWindow}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         source={resolveAssetSource(this.props.source as ImageSourcePropType)}
         style={webViewStyles}
@@ -271,5 +281,4 @@ export default class WebView extends React.Component<WebViewSharedProps, State> 
       </View>
     );
   }
-
 }
