@@ -17,6 +17,8 @@
 
 #import "objc/runtime.h"
 
+#import "WKWebView+BrowserHack.h"
+
 static NSTimer *keyboardTimer;
 static NSString *const HistoryShimName = @"ReactNativeHistoryShim";
 static NSString *const MessageHandlerName = @"ReactNativeWebView";
@@ -73,6 +75,7 @@ static NSDictionary* customCertificatesForHost;
 @property (nonatomic, copy) RCTDirectEventBlock onLoadingFinish;
 @property (nonatomic, copy) RCTDirectEventBlock onLoadingError;
 @property (nonatomic, copy) RCTDirectEventBlock onLoadingProgress;
+@property (nonatomic, copy) RCTDirectEventBlock onShouldCreateNewWindow;
 @property (nonatomic, copy) RCTDirectEventBlock onShouldStartLoadWithRequest;
 @property (nonatomic, copy) RCTDirectEventBlock onHttpError;
 @property (nonatomic, copy) RCTDirectEventBlock onMessage;

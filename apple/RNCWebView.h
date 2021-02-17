@@ -16,6 +16,8 @@
 - (BOOL)webView:(RNCWebView *_Nonnull)webView
    shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *_Nonnull)request
    withCallback:(RCTDirectEventBlock _Nonnull)callback;
+- (RNCWebView* _Nullable)webView:(RNCWebView* _Nonnull)webView
+shouldCreateNewWindow:(NSMutableDictionary<NSString *, id>* _Nonnull)request withConfiguration:(WKWebViewConfiguration* _Nonnull)configuration withCallback:(RCTDirectEventBlock _Nonnull)callback;
 
 @end
 
@@ -65,6 +67,8 @@
 @property (nonatomic, assign) BOOL ignoreSilentHardwareSwitch;
 @property (nonatomic, copy) NSString * _Nullable allowingReadAccessToURL;
 @property (nonatomic, assign) BOOL pullToRefreshEnabled;
+@property (nonatomic, assign) BOOL openNewWindowInWebView;
+
 #if !TARGET_OS_OSX
 @property (nonatomic, weak) UIRefreshControl * refreshControl;
 #endif
