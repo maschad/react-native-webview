@@ -26,8 +26,12 @@ RCT_ENUM_CONVERTER(WKContentMode, (@{
 
 @implementation RNCWebViewManager
 {
+  NSMutableDictionary* shouldStartRequestConditions;
   NSConditionLock *_shouldStartLoadLock;
   BOOL _shouldStartLoad;
+  NSConditionLock* createNewWindowCondition;
+  BOOL createNewWindowResult;
+  RNCWebView* newWindow;
 }
 
 RCT_EXPORT_MODULE()
