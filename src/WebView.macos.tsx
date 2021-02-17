@@ -347,6 +347,7 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         onShouldCreateNewWindow={onShouldCreateNewWindow}
         onContentProcessDidTerminate={this.onContentProcessDidTerminate}
+        onNavigationStateChange={this.updateNavigationState}
         ref={this.webViewRef}
         // TODO: find a better way to type this.
         source={resolveAssetSource(this.props.source as ImageSourcePropType)}

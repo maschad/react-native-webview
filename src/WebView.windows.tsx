@@ -268,6 +268,7 @@ export default class WebView extends React.Component<
         onScroll={this.props.onScroll}
         onShouldCreateNewWindow={onShouldCreateNewWindow}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        onNavigationStateChange={this.updateNavigationState}
         source={resolveAssetSource(this.props.source as ImageSourcePropType)}
         style={webViewStyles}
         {...nativeConfig.props}

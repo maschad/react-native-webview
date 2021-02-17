@@ -382,6 +382,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
         onLoadingProgress={this.onLoadingProgress}
         onLoadingStart={this.onLoadingStart}
         onHttpError={this.onHttpError}
+        onNavigationStateChange={this.updateNavigationState}
         onRenderProcessGone={this.onRenderProcessGone}
         onMessage={this.onMessage}
         onShouldStartLoadWithRequest={this.onShouldStartLoadWithRequest}
