@@ -262,6 +262,7 @@ export interface CommonNativeWebViewProps extends ViewProps {
   cacheEnabled?: boolean;
   incognito?: boolean;
   injectedJavaScript?: string;
+  injectedJavaScriptBeforeDocumentLoad?: string;
   injectedJavaScriptBeforeContentLoaded?: string;
   injectedJavaScriptForMainFrameOnly?: boolean;
   injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
@@ -279,6 +280,7 @@ export interface CommonNativeWebViewProps extends ViewProps {
   onMessage: (event: WebViewMessageEvent) => void;
   onShouldStartLoadWithRequest: (event: ShouldStartLoadRequestEvent) => void;
   onShouldCreateNewWindow: (event: WebViewNavigationEvent) => void;
+  onWebViewClosed?: (event: WebViewNavigationEvent) => void;
   showsHorizontalScrollIndicator?: boolean;
   showsVerticalScrollIndicator?: boolean;
   // TODO: find a better way to type this.
@@ -1107,6 +1109,16 @@ export interface WebViewSharedProps extends ViewProps {
    * Allows custom handling of window.open() by a JS handler
    */
   onShouldCreateNewWindow?: OnShouldCreateNewWindow;
+
+  /**
+   * Function on webview closing
+   */
+  onWebViewClosed?: (event: WebViewNavigationEvent) => void;
+
+  /**
+   * Injected JS Prior to page load
+   */
+  injectedJavaScriptBeforeDocumentLoad?: string;
 
   /**
    * Override the native component used to render the WebView. Enables a custom native

@@ -31,6 +31,7 @@ shouldCreateNewWindow:(NSMutableDictionary<NSString *, id>* _Nonnull)request wit
 @property (nonatomic, weak) id<RNCWebViewDelegate> _Nullable delegate;
 @property (nonatomic, copy) NSDictionary * _Nullable source;
 @property (nonatomic, assign) BOOL messagingEnabled;
+@property (nonatomic, copy) NSString *injectedJavaScriptBeforeDocumentLoad;
 @property (nonatomic, copy) NSString * _Nullable injectedJavaScript;
 @property (nonatomic, copy) NSString * _Nullable injectedJavaScriptBeforeContentLoaded;
 @property (nonatomic, assign) BOOL injectedJavaScriptForMainFrameOnly;

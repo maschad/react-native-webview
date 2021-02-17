@@ -80,6 +80,7 @@ static NSDictionary* customCertificatesForHost;
 @property (nonatomic, copy) RCTDirectEventBlock onHttpError;
 @property (nonatomic, copy) RCTDirectEventBlock onMessage;
 @property (nonatomic, copy) RCTDirectEventBlock onScroll;
+@property (nonatomic, copy) RCTDirectEventBlock onWebViewClosed;
 @property (nonatomic, copy) RCTDirectEventBlock onContentProcessDidTerminate;
 #if !TARGET_OS_OSX
 @property (nonatomic, copy) WKWebView *webView;
@@ -100,6 +101,8 @@ static NSDictionary* customCertificatesForHost;
 #endif // !TARGET_OS_OSX
   BOOL _savedHideKeyboardAccessoryView;
   BOOL _savedKeyboardDisplayRequiresUserAction;
+  WKWebViewConfiguration *wkWebViewConfig;
+
 
   // Workaround for StatusBar appearance bug for iOS 12
   // https://github.com/react-native-webview/react-native-webview/issues/62
@@ -115,6 +118,12 @@ static NSDictionary* customCertificatesForHost;
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 /* __IPHONE_13_0 */
   BOOL _savedAutomaticallyAdjustsScrollIndicatorInsets;
 #endif
+}
+
+- (void)webViewDidClose:(WKWebView *)webView {
+  if (_onWebViewClosed) {
+    _onWebViewClosed([self baseEvent]);
+  }
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -309,22 +318,6 @@ static NSDictionary* customCertificatesForHost;
                                                             injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                                                          forMainFrameOnly:YES];
       [wkWebViewConfig.userContentController addUserScript:script];
-  }
-
-  if (sender.contentRuleLists) {
-    WKContentRuleListStore *contentRuleListStore = WKContentRuleListStore.defaultStore;
-
-    [contentRuleListStore getAvailableContentRuleListIdentifiers:^(NSArray<NSString *> *identifiers) {
-      for (NSString *identifier in identifiers) {
-        if ([sender.contentRuleLists containsObject:identifier]) {
-          [contentRuleListStore lookUpContentRuleListForIdentifier:identifier completionHandler:^(WKContentRuleList *contentRuleList, NSError *error) {
-            if (!error) {
-                [wkWebViewConfig.userContentController addContentRuleList:contentRuleList];
-            }
-          }];
-        }
-      }
-    }];
   }
 }
 
