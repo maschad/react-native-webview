@@ -13,6 +13,7 @@ import invariant from 'invariant';
 import {
   defaultOriginWhitelist,
   createOnShouldStartLoadWithRequest,
+  createOnShouldCreateNewWindow,
   defaultRenderError,
   defaultRenderLoading,
 } from './WebViewShared';
@@ -202,7 +203,7 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     if (onHttpError) {
       onHttpError(event);
     }
-  }
+  };
 
   onLoadingFinish = (event: WebViewNavigationEvent) => {
     const { onLoad, onLoadEnd } = this.props;
@@ -237,11 +238,23 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     _url: string,
     lockIdentifier: number,
   ) => {
-    const viewManager
-      = (this.props.nativeConfig && this.props.nativeConfig.viewManager)
-      || RNCWebViewManager;
+    const viewManager =
+      (this.props.nativeConfig && this.props.nativeConfig.viewManager) ||
+      RNCWebViewManager;
 
     viewManager.startLoadWithResult(!!shouldStart, lockIdentifier);
+  };
+
+  onShouldCreateNewWindowCallback = (
+    shouldCreate: boolean,
+    _url: string,
+    lockIdentifier: number,
+  ) => {
+    const viewManager =
+      (this.props.nativeConfig && this.props.nativeConfig.viewManager) ||
+      RNCWebViewManager;
+
+    viewManager.createNewWindowWithResult(!!shouldCreate, lockIdentifier);
   };
 
   onContentProcessDidTerminate = (event: WebViewTerminatedEvent) => {
@@ -273,6 +286,7 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
       nativeConfig = {},
       onMessage,
       onShouldStartLoadWithRequest: onShouldStartLoadWithRequestProp,
+      onShouldCreateNewWindow: onShouldCreateNewWindowProp,
       originWhitelist,
       renderError,
       renderLoading,
@@ -309,9 +323,14 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
       onShouldStartLoadWithRequestProp,
     );
 
-    const NativeWebView
-      = (nativeConfig.component as typeof NativeWebViewMacOS | undefined)
-      || RNCWebView;
+    const onShouldCreateNewWindow = createOnShouldCreateNewWindow(
+      this.onShouldCreateNewWindowCallback,
+      onShouldCreateNewWindowProp,
+    );
+
+    const NativeWebView =
+      (nativeConfig.component as typeof NativeWebViewMacOS | undefined) ||
+      RNCWebView;
 
     const webView = (
       <NativeWebView
@@ -326,6 +345,7 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
         onMessage={this.onMessage}
         onScroll={this.props.onScroll}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        onShouldCreateNewWindow={onShouldCreateNewWindow}
         onContentProcessDidTerminate={this.onContentProcessDidTerminate}
         ref={this.webViewRef}
         // TODO: find a better way to type this.
