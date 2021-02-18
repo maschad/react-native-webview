@@ -776,17 +776,6 @@ static NSDictionary* customCertificatesForHost;
         return;
     }
 
-    // Some child windows (created by createWebViewWithConfiguration)
-    // open about:blank at first before navigate to upcoming request,
-    // the method may run before the upcoming request is navigated
-    // and will cause error "about:blank is not a valid file URL"
-    // If you want to open a blank page, you should pass source = { html: '' }
-    NSString *uri = [RCTConvert NSString:_source[@"uri"]];
-    if ([uri isEqualToString:@"about:blank"]) {
-        return;
-    }
-
-
     NSURLRequest *request = [self requestForSource:_source];
     // Because of the way React works, as pages redirect, we actually end up
     // passing the redirect urls back here, so we ignore them if trying to load
