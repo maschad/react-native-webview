@@ -431,6 +431,64 @@ static NSDictionary* customCertificatesForHost;
 
 - (void)didMoveToWindow
 {
+
+   if (self.window != nil && !initiated) {
+    initiated = YES;
+    if (wkWebViewConfig == nil) {
+      wkWebViewConfig = [WKWebViewConfiguration new];
+      WKPreferences *prefs = [[WKPreferences alloc]init];
+      // Override javaScriptEnabled of configuration when create new window would cause unexpected behaviour
+      if (!_javaScriptEnabled) {
+        prefs.javaScriptEnabled = NO;
+        wkWebViewConfig.preferences = prefs;
+      }
+      [self setupConfiguration:self];
+      _webView = [[WKWebView alloc] initWithFrame:self.bounds configuration: wkWebViewConfig];
+    }
+
+    [self setBackgroundColor: _savedBackgroundColor];
+    _webView.scrollView.delegate = self;
+    _webView.UIDelegate = self;
+    _webView.navigationDelegate = self;
+    _webView.scrollView.scrollEnabled = _scrollEnabled;
+    _webView.scrollView.pagingEnabled = _pagingEnabled;
+    _webView.scrollView.bounces = _bounces;
+    _webView.scrollView.showsHorizontalScrollIndicator = _showsHorizontalScrollIndicator;
+    _webView.scrollView.showsVerticalScrollIndicator = _showsVerticalScrollIndicator;
+    _webView.scrollView.directionalLockEnabled = _directionalLockEnabled;
+    _webView.allowsLinkPreview = _allowsLinkPreview;
+    [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew context:nil];
+      [_webView addObserver:self forKeyPath:@"title" options:NSKeyValueObservingOptionNew context:nil];
+      [_webView addObserver:self forKeyPath:@"loading" options:NSKeyValueObservingOptionNew context:nil];
+      [_webView addObserver:self forKeyPath:@"canGoBack" options:NSKeyValueObservingOptionNew context:nil];
+      [_webView addObserver:self forKeyPath:@"canGoForward" options:NSKeyValueObservingOptionNew context:nil];
+      [_webView addObserver:self forKeyPath:@"URL" options:NSKeyValueObservingOptionNew context:nil];
+    _webView.allowsBackForwardNavigationGestures = _allowsBackForwardNavigationGestures;
+
+    // add pull down to reload feature in scrollview of webview
+    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+    [refreshControl addTarget:self action:@selector(handleRefresh:) forControlEvents:UIControlEventValueChanged];
+    [_webView.scrollView addSubview:refreshControl];
+
+    if (_userAgent) {
+      _webView.customUserAgent = _userAgent;
+    }
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
+    if ([_webView.scrollView respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
+      _webView.scrollView.contentInsetAdjustmentBehavior = _savedContentInsetAdjustmentBehavior;
+    }
+#endif
+
+    UILongPressGestureRecognizer* longGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressed:)];
+    longGesture.delegate = self;
+    [_webView addGestureRecognizer:longGesture];
+
+    [self addSubview:_webView];
+    [self setHideKeyboardAccessoryView: _savedHideKeyboardAccessoryView];
+    [self setKeyboardDisplayRequiresUserAction: _savedKeyboardDisplayRequiresUserAction];
+    [self visitSource];
+  }
+
   if (self.window != nil && _webView == nil) {
     WKWebViewConfiguration *wkWebViewConfig = [self setUpWkWebViewConfig];
 #if !TARGET_OS_OSX
