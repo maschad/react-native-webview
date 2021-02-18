@@ -104,6 +104,10 @@ static NSDictionary* customCertificatesForHost;
   BOOL _savedKeyboardDisplayRequiresUserAction;
   WKWebViewConfiguration *wkWebViewConfig;
 
+  NSBundle* resourceBundle;
+  BOOL initiated;
+
+
 
   // Workaround for StatusBar appearance bug for iOS 12
   // https://github.com/react-native-webview/react-native-webview/issues/62
@@ -197,6 +201,11 @@ static NSDictionary* customCertificatesForHost;
                                                  object:nil];
 
   }
+
+  NSString* bundlePath = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
+  resourceBundle = [NSBundle bundleWithPath:bundlePath];
+  initiated = NO;
+
 #endif // !TARGET_OS_OSX
   return self;
 }
