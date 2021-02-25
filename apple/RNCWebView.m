@@ -146,7 +146,7 @@ static NSDictionary* customCertificatesForHost;
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 /* __IPHONE_13_0 */
     _savedAutomaticallyAdjustsScrollIndicatorInsets = NO;
 #endif
-      
+
   }
 
 #if !TARGET_OS_OSX
@@ -247,7 +247,13 @@ static NSDictionary* customCertificatesForHost;
 
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 140000 /* iOS 14 */
   if (@available(iOS 14.0, *)) {
-      wkWebViewConfig.limitsNavigationsToAppBoundDomains = YES;
+    if ([wkWebViewConfig respondsToSelector:@selector(limitsNavigationsToAppBoundDomains)]) {
+      if (_limitsNavigationsToAppBoundDomains) {
+        wkWebViewConfig.limitsNavigationsToAppBoundDomains = YES;
+      } else {
+         wkWebViewConfig.limitsNavigationsToAppBoundDomains = NO;
+      }
+    }
   }
 #endif
 
